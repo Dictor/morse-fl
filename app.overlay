@@ -1,50 +1,57 @@
 #include <st/h7/stm32h743zitx-pinctrl.dtsi>
-#include <st/h7/stm32h743.dtsi>
+
+&pll3 {
+	div-m = <1>;
+	mul-n = <24>;
+	div-p = <2>;
+	div-q = <4>;
+	div-r = <4>;
+	clocks = <&clk_hse>;
+	status = "okay";
+};
+
+&ltdc {
+    status = "okay";
+    pinctrl-0 = <
+    &ltdc_r3_pb0
+    &ltdc_r4_pa5
+    &ltdc_r5_pc0
+    &ltdc_r6_pb1
+    &ltdc_r7_pe15
+    &ltdc_g2_pa6
+    &ltdc_g3_pe11
+    &ltdc_g4_pb10
+    &ltdc_g5_pb11
+    &ltdc_g6_pc7
+    &ltdc_g7_pg8
+    &ltdc_b3_pd10
+    &ltdc_b4_pe12
+    &ltdc_b5_pa3
+    &ltdc_b6_pb8
+    &ltdc_b7_pb9
+    &ltdc_de_pf10
+    &ltdc_clk_pe14
+    &ltdc_hsync_pc6
+    &ltdc_vsync_pa4
+    >;
+    pinctrl-names = "default";
+    // from ADV7123(GM7123)'s spec
+    hsync-pol = <STM32_LTDC_HSPOL_ACTIVE_LOW>;
+    vsync-pol = <STM32_LTDC_VSPOL_ACTIVE_LOW>;
+    de-pol = <STM32_LTDC_DEPOL_ACTIVE_LOW>;
+    pclk-pol = <STM32_LTDC_PCPOL_ACTIVE_HIGH>;
+    // from standard VGA timing of 320x200,60Hz
+    hsync-duration = <32>;
+    vsync-duration = <6>;
+    hfp-duration = <8>;
+    hbp-duration = <40>;
+    vfp-duration = <3>;
+    vbp-duration = <6>;
+    height = <200>;
+    width = <320>;
+};
+
 / {
-    soc {
-        ltdc: display-controller@50001000 {
-            status = "disabled";
-            pinctrl-0 = <
-            &ltdc_r3_pb0
-            &ltdc_r4_pa5
-            &ltdc_r5_pc0
-            &ltdc_r6_pb1
-            &ltdc_r7_pe15
-            &ltdc_g2_pa6
-            &ltdc_g3_pe11
-            &ltdc_g4_pb10
-            &ltdc_g5_pb11
-            &ltdc_g6_pc7
-            &ltdc_g7_pg8
-            &ltdc_b3_pd10
-            &ltdc_b4_pe12
-            &ltdc_b5_pa3
-            &ltdc_b6_pb8
-            &ltdc_b7_pb9
-            &ltdc_de_pf10
-            &ltdc_clk_pe14
-            &ltdc_hsync_pc6
-            &ltdc_vsync_pa4
-            >;
-            pinctrl-names = "default";
-            // ext-sdram = <&sram1>;
-            // from ADV7123(GM7123)'s spec
-            hsync-pol = <STM32_LTDC_HSPOL_ACTIVE_LOW>;
-            vsync-pol = <STM32_LTDC_VSPOL_ACTIVE_LOW>;
-            de-pol = <STM32_LTDC_DEPOL_ACTIVE_LOW>;
-            pclk-pol = <STM32_LTDC_PCPOL_ACTIVE_HIGH>;
-            // from standard VGA timing of 640x480,60Hz
-            hsync-duration = <96>;
-            vsync-duration = <2>;
-            hbp-duration = <48>;
-            vbp-duration = <31>;
-            hfp-duration = <16>;
-            vfp-duration = <11>;
-            height = <480>;
-            width = <640>;
-        };
-    };
-    
     leds {
         compatible = "gpio-leds";
         run_led: led_pd1 {
