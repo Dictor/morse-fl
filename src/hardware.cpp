@@ -14,7 +14,7 @@ const struct gpio_dt_spec hardware::err_led =
     GPIO_DT_SPEC_GET(DT_NODELABEL(err_led), gpios);
 const struct gpio_dt_spec hardware::act_led =
     GPIO_DT_SPEC_GET(DT_NODELABEL(act_led), gpios);
-//const struct device* hardware::display = DEVICE_DT_GET(DT_NODELABEL(ltdc));
+const struct device* hardware::display = DEVICE_DT_GET(DT_NODELABEL(ltdc));
 
 struct net_mgmt_event_callback hardware::net_mgmt_cb;
 struct net_if *hardware::net_iface;
@@ -25,9 +25,9 @@ int hardware::CheckHardware() {
   size. CPP container is intentionally hestatied because it's system initialize
   code
   */
-  const int kChecklistSize = 3;
+  const int kChecklistSize = 4;
   const device *check_list[kChecklistSize] = {run_led.port, err_led.port,
-                                              act_led.port};
+                                              act_led.port, display};
 
   for (int i = 0; i < kChecklistSize; i++) {
     if (check_list[i] == NULL) return -EINVAL;

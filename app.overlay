@@ -1,13 +1,13 @@
 #include <st/h7/stm32h743zitx-pinctrl.dtsi>
 
 &pll3 {
-	div-m = <1>;
-	mul-n = <24>;
-	div-p = <2>;
-	div-q = <4>;
-	div-r = <4>;
-	clocks = <&clk_hse>;
-	status = "okay";
+    div-m = <1>;
+    mul-n = <25>;
+    div-p = <2>;
+    div-q = <4>;
+    div-r = <8>; // 25MHz will be provided to LTDC
+    clocks = <&clk_hse>;
+    status = "okay";
 };
 
 &ltdc {
@@ -40,18 +40,26 @@
     vsync-pol = <STM32_LTDC_VSPOL_ACTIVE_LOW>;
     de-pol = <STM32_LTDC_DEPOL_ACTIVE_LOW>;
     pclk-pol = <STM32_LTDC_PCPOL_ACTIVE_HIGH>;
-    // from standard VGA timing of 320x200,60Hz
-    hsync-duration = <32>;
-    vsync-duration = <6>;
-    hfp-duration = <8>;
-    hbp-duration = <40>;
-    vfp-duration = <3>;
-    vbp-duration = <6>;
-    height = <200>;
-    width = <320>;
+    // from standard VGA timing of 640x320,60Hz
+    hsync-duration = <96>;
+    vsync-duration = <2>;
+    hfp-duration = <16>;
+    hbp-duration = <48>;
+    vfp-duration = <10>;
+    vbp-duration = <33>;
+    height = <480>;
+    width = <640>;
+    def-back-color-red = <0x00>;
+	def-back-color-green = <0x00>;
+	def-back-color-blue = <0x00>;
 };
 
 / {
+    chosen {
+        zephyr,display=&ltdc;
+        zephyr,sram = &sram1;
+    };
+
     leds {
         compatible = "gpio-leds";
         run_led: led_pd1 {
