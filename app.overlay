@@ -57,7 +57,6 @@
 / {
     chosen {
         zephyr,display=&ltdc;
-        zephyr,sram = &sram1;
     };
 
     leds {
