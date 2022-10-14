@@ -4,6 +4,7 @@
 
 #include "../inc/form.h"
 #include "../inc/hardware.h"
+#include "../inc/http.h"
 
 using namespace hangang_view;
 
@@ -11,7 +12,7 @@ void hangang_view::task::BootTask(void *, void *, void *) {
   DebugForm frm;
   frm.Update();
   frm.Draw();
-  
+
   while (true) {
     if (hardware::NetIPv4Attached()) {
       frm.ip_attached_ = true;
@@ -25,4 +26,8 @@ void hangang_view::task::BootTask(void *, void *, void *) {
     }
     break;
   }
+
+  hangang_view::HttpInit();
+  k_sleep(K_MSEC(1000));
+  hangang_view::HttpGet("google.com", "/");
 }
