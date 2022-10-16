@@ -17,17 +17,17 @@ class DNSResolver {
   in6_addr dns_addr6_;
 
   atomic_t dns_status_;
-  static const int kStatusBitSuccess = 0;  
-  static const int kStatusBitError = 1;  
-  static const int kStatusBitComplete = 1; 
-  static const int kStatusBitIPv4 = 7; 
+  static const int kStatusBitSuccess = 0;
+  static const int kStatusBitError = 1;
+  static const int kStatusBitComplete = 1;
+  static const int kStatusBitIPv4 = 7;
 
-  static void Callback(enum dns_resolve_status status, struct dns_addrinfo *info,
-              void *user_data);
+  static void Callback(enum dns_resolve_status status,
+                       struct dns_addrinfo *info, void *user_data);
 
  public:
   const char *dns_query_;
-  DNSResolver(const char *query) : dns_query_(query), dns_timeout_(1000) {
+  DNSResolver(const char *query) : dns_timeout_(1000), dns_query_(query) {
     dns_status_ = ATOMIC_INIT(0);
   };
   int Resolve();

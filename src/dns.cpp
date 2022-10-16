@@ -11,7 +11,7 @@ int DNSResolver::Resolve() {
   ret = dns_get_addr_info(dns_query_, DNS_QUERY_TYPE_A, &dns_id_,
                           &hangang_view::DNSResolver::Callback, (void *)this,
                           dns_timeout_);
-  LOG_DBG("dns id = %d", dns_id_);
+  LOG_INF("DNS resolving started, id = %d, host = %s", dns_id_, dns_query_);
   if (ret < 0) {
     LOG_ERR("Cannot resolve IPv4 address (%d)", ret);
   }
@@ -22,7 +22,6 @@ void DNSResolver::Callback(enum dns_resolve_status status,
                            struct dns_addrinfo *info, void *user_data) {
   /* hr_* is just for logging*/
   char hr_addr[NET_IPV6_ADDR_LEN];
-  char *hr_family;
   void *addr;
   DNSResolver *instance = (DNSResolver *)user_data;
 
@@ -58,12 +57,10 @@ void DNSResolver::Callback(enum dns_resolve_status status,
   }
 
   if (info->ai_family == AF_INET) {
-    hr_family = "IPv4";
     instance->dns_addr4_ = net_sin(&info->ai_addr)->sin_addr;
     addr = (void *)&instance->dns_addr4_;
     atomic_set_bit(&instance->dns_status_, kStatusBitIPv4);
   } else if (info->ai_family == AF_INET6) {
-    hr_family = "IPv6";
     instance->dns_addr6_ = net_sin6(&info->ai_addr)->sin6_addr;
     addr = (void *)&instance->dns_addr6_;
     atomic_clear_bit(&instance->dns_status_, kStatusBitIPv4);
@@ -73,7 +70,7 @@ void DNSResolver::Callback(enum dns_resolve_status status,
     return;
   }
 
-  LOG_INF("dns result address: %s",
+  LOG_INF("DNS resolved successful: %s",
           net_addr_ntop(info->ai_family, addr, hr_addr, sizeof(hr_addr)));
   atomic_set_bit(&instance->dns_status_, kStatusBitSuccess);
 }
