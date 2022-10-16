@@ -45,4 +45,12 @@ void hangang_view::task::BootTask(void *, void *, void *) {
     LOG_ERR("IPv6 not supported yet");
     return;
   }
+
+  in_addr server_addr = dns.GetIPv4Address();
+  net_addr_ntop(AF_INET, &server_addr, frm.dns_address_,
+                sizeof(frm.dns_address_));
+  frm.Update();
+  frm.Draw();
+
+  LOG_INF("BootTask [4/4] connect to MQTT server");
 }

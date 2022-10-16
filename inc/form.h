@@ -26,7 +26,9 @@ class DebugForm : public IForm {
  public:
   DebugForm(){};
   bool ip_attached_ = false;
+  bool dns_completed_ = false;
   char ip_address_[25];
+  char dns_address_[25];
 
   void Update() {
     sprintf(version_, "hangang-view %d.%d.%d", kMajorVersion, kMinorVersion,
@@ -50,6 +52,9 @@ class DebugForm : public IForm {
     
     lv_obj_t* label_ip = lv_label_create(base);
     lv_label_set_text_fmt(label_ip, "ip address : %s", ip_address_);
+
+    lv_obj_t* label_dns = lv_label_create(base);
+    lv_label_set_text_fmt(label_dns, "server address : %s", dns_address_);
   }
 };
 
