@@ -16,7 +16,7 @@ LOG_MODULE_REGISTER(app_main);
 
 using namespace hangang_view;
 
-K_THREAD_STACK_DEFINE(task_boot_stack, 2048);
+K_THREAD_STACK_DEFINE(task_boot_stack, 4096);
 struct k_thread task_boot_data;
 
 void AppMain(void) {
