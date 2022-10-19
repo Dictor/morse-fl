@@ -5,6 +5,7 @@
 #include "../inc/dns.h"
 #include "../inc/form.h"
 #include "../inc/hardware.h"
+#include "../inc/mqtt.h"
 
 LOG_MODULE_REGISTER(task);
 
@@ -32,7 +33,7 @@ void hangang_view::task::BootTask(void *, void *, void *) {
   }
 
   LOG_INF("BootTask [3/4] resolving DNS for MQTT server");
-  DNSResolver dns("api.chinchister.com");
+  DNSResolver dns("192.168.0.8");
   dns.Resolve();
   while (!dns.IsSuccess()) {
     if (dns.HasError()) {
@@ -52,5 +53,31 @@ void hangang_view::task::BootTask(void *, void *, void *) {
   frm.Update();
   frm.Draw();
 
+  int err = 0;
   LOG_INF("BootTask [4/4] connect to MQTT server");
+  MQTTClient mqtt(server_addr, 3000);
+  mqtt.Connect();
+  if (err = mqtt.WaitEstablished(100) < 0) {
+      LOG_ERR("MQTT wait socket fail : %d", err);
+  }
+  while (true) {
+    if (mqtt.HasError()) {
+      LOG_ERR("MQTT error caused");
+      return;
+    }
+    if (mqtt.IsConnected()) {
+      LOG_INF("MQTT connected!");
+      break;
+    }
+  }
+  frm.mqtt_connected_ = true;
+  frm.Update();
+  frm.Draw();
+
+  if (err = mqtt.Subscribe("symbol") < 0) {
+    LOG_ERR("MQTT subscribe fail : %d", err);
+  }
+
+  LOG_INF("BootTask completed!");
+  return;
 }

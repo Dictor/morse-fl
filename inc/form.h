@@ -27,6 +27,7 @@ class DebugForm : public IForm {
   DebugForm(){};
   bool ip_attached_ = false;
   bool dns_completed_ = false;
+  bool mqtt_connected_ = false;
   char ip_address_[25];
   char dns_address_[25];
 
@@ -55,6 +56,9 @@ class DebugForm : public IForm {
 
     lv_obj_t* label_dns = lv_label_create(base);
     lv_label_set_text_fmt(label_dns, "server address : %s", dns_address_);
+
+    lv_obj_t* label_mqtt = lv_label_create(base);
+    lv_label_set_text_fmt(label_mqtt, "mqtt connected : %s", mqtt_connected_ ? "O" : "X");
   }
 };
 

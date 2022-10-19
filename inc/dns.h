@@ -17,10 +17,12 @@ class DNSResolver {
   in6_addr dns_addr6_;
 
   atomic_t dns_status_;
-  static const int kStatusBitSuccess = 0;
-  static const int kStatusBitError = 1;
-  static const int kStatusBitComplete = 1;
-  static const int kStatusBitIPv4 = 7;
+  enum MQTTStatusBit {
+    kBitSuccess = 0,
+    kBitError = 1,
+    kBitComplete = 1,
+    kBitIPv4 = 7
+  };
 
   static void Callback(enum dns_resolve_status status,
                        struct dns_addrinfo *info, void *user_data);
