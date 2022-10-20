@@ -141,4 +141,6 @@ int MQTTClient::Subscribe(char *topic_name) {
   return mqtt_subscribe(&client_, &topic_list);
 }
 
+int MQTTClient::Input() { return mqtt_input(&client_); }
+
 int MQTTClient::Abort() { return mqtt_abort(&client_); }

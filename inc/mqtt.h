@@ -58,6 +58,7 @@ class MQTTClient {
   int WaitEstablished(int timeout);
   int Subscribe(char* topic_name);
   int Abort();
+  int Input();
 
   static void GlobalEventCallback(struct mqtt_client *client,
                                   const struct mqtt_evt *evt);
