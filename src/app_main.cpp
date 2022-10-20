@@ -7,17 +7,14 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/zephyr.h>
 
-#include "../inc/hardware.h"
-#include "../inc/version.h"
 #include "../inc/form.h"
+#include "../inc/hardware.h"
 #include "../inc/task.h"
+#include "../inc/version.h"
 
 LOG_MODULE_REGISTER(app_main);
 
 using namespace hangang_view;
-
-K_THREAD_STACK_DEFINE(task_boot_stack, 4096);
-struct k_thread task_boot_data;
 
 void AppMain(void) {
   /* hardware initialization */
@@ -37,11 +34,9 @@ void AppMain(void) {
   LOG_INF("hangang-view %d.%d.%d", hangang_view::kMajorVersion,
           hangang_view::kMinorVersion, hangang_view::kHotfixVersion);
 
-  k_tid_t tid_boot = k_thread_create(&task_boot_data, task_boot_stack,
-                                 K_THREAD_STACK_SIZEOF(task_boot_stack),
-                                 task::BootTask,
-                                 NULL, NULL, NULL,
-                                 5, 0, K_NO_WAIT);
+  struct task::AppContext app_ctx;
+  task::InitTask(&app_ctx);
+  k_thread_start(app_ctx.boot_task_id);
 
   for (;;) {
     gpio_pin_toggle_dt(&hangang_view::hardware::run_led);

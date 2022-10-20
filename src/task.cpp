@@ -5,13 +5,41 @@
 #include "../inc/dns.h"
 #include "../inc/form.h"
 #include "../inc/hardware.h"
-#include "../inc/mqtt.h"
 
 LOG_MODULE_REGISTER(task);
 
 using namespace hangang_view;
 
-void hangang_view::task::BootTask(void *, void *, void *) {
+K_THREAD_STACK_DEFINE(task_boot_stack, 4096);
+struct k_thread task_boot_data;
+K_THREAD_STACK_DEFINE(task_price_stack, 4096);
+struct k_thread task_price_data;
+
+void task::InitTask(struct AppContext *ctx) {
+  ctx->boot_task_id = k_thread_create(
+      &task_boot_data, task_boot_stack, K_THREAD_STACK_SIZEOF(task_boot_stack),
+      task::BootTask, (void *)ctx, NULL, NULL, 5, 0, K_FOREVER);
+  ctx->price_task_id =
+      k_thread_create(&task_price_data, task_price_stack,
+                      K_THREAD_STACK_SIZEOF(task_price_stack), task::PriceTask,
+                      (void *)ctx, NULL, NULL, 5, 0, K_FOREVER);
+  ctx->mqtt = NULL;
+  return;
+}
+
+void task::PriceTask(void *ctx, void *, void *) {
+  LOG_INF("PriceTask started!");
+  struct task::AppContext *app_ctx = (struct task::AppContext *)ctx;
+  while (true) {
+    app_ctx->mqtt->Input();
+    k_sleep(K_MSEC(100));
+  };
+}
+
+void task::BootTask(void *ctx, void *, void *) {
+  struct task::AppContext *app_ctx = (struct task::AppContext *)ctx;
+  bool successBoot = false;
+
   LOG_INF("BootTask [1/4] draw debug form");
   DebugForm frm;
   frm.Update();
@@ -55,17 +83,17 @@ void hangang_view::task::BootTask(void *, void *, void *) {
 
   int err = 0;
   LOG_INF("BootTask [4/4] connect to MQTT server");
-  MQTTClient mqtt(server_addr, 3000);
-  mqtt.Connect();
-  if (err = mqtt.WaitEstablished(100) < 0) {
-      LOG_ERR("MQTT wait socket fail : %d", err);
+  auto mqtt = new MQTTClient(server_addr, 3000);
+  mqtt->Connect();
+  if (err = mqtt->WaitEstablished(100) < 0) {
+    LOG_ERR("MQTT wait socket fail : %d", err);
   }
   while (true) {
-    if (mqtt.HasError()) {
+    if (mqtt->HasError()) {
       LOG_ERR("MQTT error caused");
       return;
     }
-    if (mqtt.IsConnected()) {
+    if (mqtt->IsConnected()) {
       LOG_INF("MQTT connected!");
       break;
     }
@@ -74,10 +102,18 @@ void hangang_view::task::BootTask(void *, void *, void *) {
   frm.Update();
   frm.Draw();
 
-  if (err = mqtt.Subscribe("symbol") < 0) {
+  if (err = mqtt->Subscribe("symbol") < 0) {
     LOG_ERR("MQTT subscribe fail : %d", err);
+  } else {
+    successBoot = true;
   }
 
-  LOG_INF("BootTask completed!");
+  if (successBoot) {
+    LOG_INF("BootTask completed!");
+    app_ctx->mqtt = mqtt;
+    k_thread_start(app_ctx->price_task_id);
+  } else {
+    LOG_INF("BootTask failed!");
+  }
   return;
 }
