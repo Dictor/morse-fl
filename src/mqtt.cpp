@@ -4,7 +4,9 @@
 #include <zephyr/net/socket.h>
 #include <zephyr/random/rand32.h>
 
-LOG_MODULE_REGISTER(mqtt, LOG_LEVEL_DBG);
+#include "../inc/json.h"
+
+LOG_MODULE_REGISTER(mqtt);
 
 using namespace hangang_view;
 
@@ -76,29 +78,42 @@ void MQTTClient::EventCallback(const struct mqtt_evt *evt) {
       break;
 
     case MQTT_EVT_PUBLISH: {
-      int len = evt->param.publish.message.payload.len;
+      int message_len = evt->param.publish.message.payload.len;
 
-      LOG_INF("MQTT publish received %d, %d bytes", evt->result, len);
+      LOG_INF("MQTT publish received %d, %d bytes", evt->result, message_len);
       LOG_INF("id: %d, qos: %d", evt->param.publish.message_id,
               evt->param.publish.message.topic.qos);
 
-      while (len) {
+      int read_len = 0;
+      if (message_len > sizeof(payload_) - 1) {  // -1 for final null character
+        LOG_ERR("message payload more larger then buffer!");
+        return;
+      }
+
+
+      while (message_len > read_len) {
         int bytes_read = mqtt_read_publish_payload(
-            &client_, payload_,
-            len >= sizeof(payload_) - 1 ? sizeof(payload_) - 1 : len);
+            &client_, payload_ + read_len, message_len - read_len);
         if (bytes_read < 0 && bytes_read != -EAGAIN) {
-          LOG_ERR("failure to read payload");
+          LOG_ERR("failure to read payload : %d", bytes_read);
           break;
         }
-
-        payload_[bytes_read] = '\0';
-        LOG_INF("payload: %s", payload_);
-        len -= bytes_read;
+        read_len += bytes_read;
       }
+
+      payload_[message_len] = '\0';
+      LOG_INF("complete to read %d bytes from %d bytes of payload", read_len, message_len);
+      LOG_DBG("payload : %s", payload_);
 
       struct mqtt_puback_param puback;
       puback.message_id = evt->param.publish.message_id;
       mqtt_publish_qos1_ack(&client_, &puback);
+
+      int ret = json::ParseSymbolJson((char *)payload_, message_len, symbols_);
+      if (ret < 0) {
+        LOG_ERR("fail to parse payload to json : %d", ret);
+      }
+      LOG_INF("%d symbols parsed to 0x%x.", symbols_->symbols_len, symbols_);
       break;
     }
     default:

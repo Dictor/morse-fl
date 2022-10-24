@@ -24,15 +24,38 @@ void task::InitTask(struct AppContext *ctx) {
                       K_THREAD_STACK_SIZEOF(task_price_stack), task::PriceTask,
                       (void *)ctx, NULL, NULL, 5, 0, K_FOREVER);
   ctx->mqtt = NULL;
+  memset((void *)&ctx->symbols, 0, sizeof(ctx->symbols));
   return;
 }
 
 void task::PriceTask(void *ctx, void *, void *) {
   LOG_INF("PriceTask started!");
   struct task::AppContext *app_ctx = (struct task::AppContext *)ctx;
+  PriceForm frm;
+  static const int kTaskLoopInterval = 100;
+  static const int kSymbolChangeInterval = 3000;
+  int current_symbol_index = 0, symbol_interval_counter = 0;
   while (true) {
     app_ctx->mqtt->Input();
-    k_sleep(K_MSEC(100));
+    k_sleep(K_MSEC(kTaskLoopInterval));
+    symbol_interval_counter++;
+
+    if (symbol_interval_counter > kSymbolChangeInterval / kTaskLoopInterval) {
+      symbol_interval_counter = 0;
+      if (app_ctx->symbols.symbols_len > 0) {
+        LOG_INF("display %dth symbol", current_symbol_index);
+        struct json::symbol symbol =
+            app_ctx->symbols.symbols[current_symbol_index];
+        strcpy(frm.name_, symbol.name);
+        frm.price_ = (float)symbol.price / 100.0f;
+        frm.percentile_ = (float)symbol.percentile / 100.0f;
+        frm.Update();
+        frm.Draw();
+        current_symbol_index++;
+        if (current_symbol_index > app_ctx->symbols.symbols_len - 1)
+          current_symbol_index = 0;
+      }
+    }
   };
 }
 
@@ -83,7 +106,7 @@ void task::BootTask(void *ctx, void *, void *) {
 
   int err = 0;
   LOG_INF("BootTask [4/4] connect to MQTT server");
-  auto mqtt = new MQTTClient(server_addr, 3000);
+  auto mqtt = new MQTTClient(server_addr, 3000, &app_ctx->symbols);
   mqtt->Connect();
   if (err = mqtt->WaitEstablished(100) < 0) {
     LOG_ERR("MQTT wait socket fail : %d", err);
@@ -111,9 +134,14 @@ void task::BootTask(void *ctx, void *, void *) {
   if (successBoot) {
     LOG_INF("BootTask completed!");
     app_ctx->mqtt = mqtt;
+    frm.boot_success_ = true;
+    frm.Update();
+    frm.Draw();
+    k_sleep(K_MSEC(5000));
     k_thread_start(app_ctx->price_task_id);
   } else {
     LOG_INF("BootTask failed!");
   }
+
   return;
 }

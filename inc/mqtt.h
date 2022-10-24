@@ -6,6 +6,8 @@
 
 #include <map>
 
+#include "json.h"
+
 namespace hangang_view {
 class MQTTClient {
  private:
@@ -15,6 +17,7 @@ class MQTTClient {
   uint8_t payload_[buffer_size_];
   struct mqtt_client client_;
   struct sockaddr_storage broker_;
+  struct json::symbols *symbols_;
 
   atomic_t mqtt_status_;
   enum MQTTStatusBit {
@@ -24,9 +27,10 @@ class MQTTClient {
 
  public:
   static std::map<struct mqtt_client *, MQTTClient *> callback_table_;
-  MQTTClient(in_addr address, uint16_t port) {
+  MQTTClient(in_addr address, uint16_t port, struct json::symbols *symbols) {
     mqtt_status_ = ATOMIC_INIT(0);
-
+    symbols_ = symbols;
+    
     /* Init address struct */
     struct sockaddr_in *broker4 = (struct sockaddr_in *)&broker_;
     broker4->sin_family = AF_INET;
@@ -56,7 +60,7 @@ class MQTTClient {
 
   int Connect();
   int WaitEstablished(int timeout);
-  int Subscribe(char* topic_name);
+  int Subscribe(char *topic_name);
   int Abort();
   int Input();
 

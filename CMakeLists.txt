@@ -4,6 +4,6 @@ set(BOARD nucleo_h743zi)
 find_package(Zephyr)
 project(hangang-view)
 
-target_sources(app PRIVATE src/main.c src/app_main.cpp src/hardware.cpp src/task.cpp src/dns.cpp src/mqtt.cpp)
+target_sources(app PRIVATE src/main.c src/app_main.cpp src/hardware.cpp src/task.cpp src/dns.cpp src/mqtt.cpp src/json.cpp)
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
