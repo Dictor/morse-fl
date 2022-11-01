@@ -14,7 +14,7 @@ class MQTTClient {
   static const int buffer_size_ = 256;
   uint8_t rx_buffer_[buffer_size_];
   uint8_t tx_buffer_[buffer_size_];
-  uint8_t payload_[buffer_size_];
+  uint8_t payload_[buffer_size_ * 4];
   struct mqtt_client client_;
   struct sockaddr_storage broker_;
   struct json::symbols *symbols_;
