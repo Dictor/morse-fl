@@ -20,7 +20,7 @@ extern struct net_if *net_iface;
 extern atomic_t net_iface_status; 
 extern in_addr net_ipv4_address;
 
-static void NetMgmtHandler(struct net_mgmt_event_callback *cb,
+void NetMgmtHandler(struct net_mgmt_event_callback *cb,
                            uint32_t mgmt_event, struct net_if *iface);
 bool NetIPv4Attached();
 in_addr NetGetIPv4Address();
