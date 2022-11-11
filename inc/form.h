@@ -38,6 +38,7 @@ class ErrorForm : public IForm {
 
  public:
   int64_t error_code_;
+  int reboot_counter_;
   char error_message_[50];
 
   ErrorForm() {
@@ -58,9 +59,9 @@ class ErrorForm : public IForm {
   void Update() {}
 
   void Draw() {
-    lv_label_set_text(
+    lv_label_set_text_fmt(
         label_introduce_,
-        "!!fatal error caused!!\nsystem will be reset automatically");
+        "!!fatal error caused!!\nsystem will be reboot after %d seconds", reboot_counter_);
     lv_label_set_text_fmt(label_content_, "error code : 0x%d\nerror message : %s",
                           error_code_, error_message_);
   }

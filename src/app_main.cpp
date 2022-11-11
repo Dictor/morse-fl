@@ -5,13 +5,14 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/reboot.h>
 #include <zephyr/zephyr.h>
 
+#include "../inc/custom_font.h"
 #include "../inc/form.h"
 #include "../inc/hardware.h"
 #include "../inc/task.h"
 #include "../inc/version.h"
-#include "../inc/custom_font.h"
 
 LOG_MODULE_REGISTER(app_main);
 
@@ -47,8 +48,10 @@ void AppMain(void) {
     if (!app_ctx.boot_task_complete &&
         (k_uptime_get() - app_ctx.boot_task_started_uptime >
          task::kBootWatchdogInterval)) {
-          k_event_post(&app_ctx.error_event, (uint32_t)task::ErrorEventArgument::kBootTimeout);
-          LOG_ERR("Boot watchdog fired!, current=%llu, started=%llu", k_uptime_get(), app_ctx.boot_task_started_uptime);
+      k_event_post(&app_ctx.error_event,
+                   (uint32_t)task::ErrorEventArgument::kBootTimeout);
+      LOG_ERR("Boot watchdog fired!, current=%llu, started=%llu",
+              k_uptime_get(), app_ctx.boot_task_started_uptime);
     }
 
     error_event_arg =
@@ -60,13 +63,17 @@ void AppMain(void) {
           static_cast<task::ErrorEventArgument>(error_event_arg);
       frm.error_code_ = (int64_t)error_event_arg;
       strcpy(frm.error_message_, task::ErrorEventArgumentToString(arg));
-      frm.Update();
-      frm.Draw();
-      for (;;) {
+
+      for (int i = 0; i < 15; i++) {
+        frm.reboot_counter_ = 15 - i;
+        frm.Update();
+        frm.Draw();
         lv_task_handler();
+        k_sleep(K_SECONDS(1));
       }
+      sys_reboot(SYS_REBOOT_COLD);
     }
-    
-    k_sleep(K_MSEC(100));
   }
+
+  k_sleep(K_MSEC(100));
 }
