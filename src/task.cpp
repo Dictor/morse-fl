@@ -1,5 +1,6 @@
 #include "../inc/task.h"
 
+#include <zephyr/kernel.h>
 #include <zephyr/net/net_ip.h>
 
 #include "../inc/dns.h"
@@ -25,6 +26,9 @@ void task::InitTask(struct AppContext *ctx) {
                       (void *)ctx, NULL, NULL, 5, 0, K_FOREVER);
   ctx->mqtt = NULL;
   memset((void *)&ctx->symbols, 0, sizeof(ctx->symbols));
+  k_event_init(&ctx->error_event);
+  ctx->boot_task_started_uptime = k_uptime_get();
+  ctx->boot_task_complete = false;
   return;
 }
 
@@ -32,15 +36,29 @@ void task::PriceTask(void *ctx, void *, void *) {
   LOG_INF("PriceTask started!");
   struct task::AppContext *app_ctx = (struct task::AppContext *)ctx;
   PriceForm frm;
-  static const int kTaskLoopInterval = 100;
-  static const int kSymbolChangeInterval = 3000;
   int current_symbol_index = 0, symbol_interval_counter = 0;
   while (true) {
     app_ctx->mqtt->Input();
-    k_sleep(K_MSEC(kTaskLoopInterval));
+    k_sleep(K_MSEC(kPriceTaskLoopInterval));
     symbol_interval_counter++;
 
-    if (symbol_interval_counter > kSymbolChangeInterval / kTaskLoopInterval) {
+    if (k_uptime_get() - app_ctx->mqtt->LatestPublishTime() >
+        kPublishWatchdogInterval) {
+      k_event_post(&app_ctx->error_event,
+                   (uint32_t)task::ErrorEventArgument::kPublishWatchdogFired);
+      LOG_ERR(
+          "price topic publish watchdog fired: current=%llu, latest "
+          "publish=%llu",
+          k_uptime_get(), app_ctx->mqtt->LatestPublishTime());
+      return;
+    }
+
+    frm.count_ = app_ctx->symbols.symbols_len;
+    frm.last_update_sec_ =
+        (k_uptime_get() - app_ctx->mqtt->LatestPublishTime()) / 1000;
+
+    if (symbol_interval_counter >
+        kSymbolDisplayChangeInterval / kPriceTaskLoopInterval) {
       symbol_interval_counter = 0;
       if (app_ctx->symbols.symbols_len > 0) {
         LOG_INF("display %dth symbol", current_symbol_index);
@@ -49,13 +67,14 @@ void task::PriceTask(void *ctx, void *, void *) {
         strcpy(frm.name_, symbol.name);
         frm.price_ = (float)symbol.price / 100.0f;
         frm.percentile_ = (float)symbol.percentile / 100.0f;
-        frm.Update();
-        frm.Draw();
         current_symbol_index++;
         if (current_symbol_index > app_ctx->symbols.symbols_len - 1)
           current_symbol_index = 0;
       }
     }
+
+    frm.Update();
+    frm.Draw();
   };
 }
 
@@ -120,6 +139,7 @@ void task::BootTask(void *ctx, void *, void *) {
       LOG_INF("MQTT connected!");
       break;
     }
+    k_sleep(K_MSEC(100));
   }
   frm.mqtt_connected_ = true;
   frm.Update();
@@ -134,6 +154,7 @@ void task::BootTask(void *ctx, void *, void *) {
   if (successBoot) {
     LOG_INF("BootTask completed!");
     app_ctx->mqtt = mqtt;
+    app_ctx->boot_task_complete = true;
     frm.boot_success_ = true;
     frm.Update();
     frm.Draw();
@@ -144,4 +165,15 @@ void task::BootTask(void *ctx, void *, void *) {
   }
 
   return;
+}
+
+const char *task::ErrorEventArgumentToString(ErrorEventArgument arg) {
+  switch (arg) {
+    case ErrorEventArgument::kBootTimeout:
+      return "BootTimeout";
+    case ErrorEventArgument::kPublishWatchdogFired:
+      return "PublishWatchdogFired";
+    default:
+      return "Unknown";
+  }
 }

@@ -31,6 +31,40 @@ class IForm {
   virtual void Draw() = 0;
 };
 
+class ErrorForm : public IForm {
+ private:
+  lv_obj_t *label_introduce_, *label_content_;
+
+ public:
+  int64_t error_code_;
+  char error_message_[50];
+
+  ErrorForm() {
+    lv_style_set_bg_color(&base_style_, lv_color_make(255, 0, 0));
+    lv_obj_add_style(base_, &base_style_, LV_PART_MAIN);
+    lv_obj_align(base_, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_flex_flow(base_, LV_FLEX_FLOW_COLUMN);
+
+    label_introduce_ = lv_label_create(base_);
+    label_content_ = lv_label_create(base_);
+  }
+
+  ~ErrorForm() {
+    lv_obj_clean(label_introduce_);
+    lv_obj_clean(label_content_);
+  }
+
+  void Update() {}
+
+  void Draw() {
+    lv_label_set_text(
+        label_introduce_,
+        "!!fatal error caused!!\nsystem will be reset automatically");
+    lv_label_set_text_fmt(label_content_, "error code : 0x%d\nerror message : %s",
+                          error_code_, error_message_);
+  }
+};
+
 class PriceForm : public IForm {
  private:
   lv_obj_t *label_name_, *label_price_, *label_percentile_;

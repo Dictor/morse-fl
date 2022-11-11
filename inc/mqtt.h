@@ -5,6 +5,7 @@
 #include <zephyr/net/net_ip.h>
 
 #include <map>
+#include <stdint.h>
 
 #include "json.h"
 
@@ -25,11 +26,14 @@ class MQTTClient {
     kBitError = 1,
   };
 
+  int64_t latest_publish_time_;
+
  public:
   static std::map<struct mqtt_client *, MQTTClient *> callback_table_;
   MQTTClient(in_addr address, uint16_t port, struct json::symbols *symbols) {
     mqtt_status_ = ATOMIC_INIT(0);
     symbols_ = symbols;
+    latest_publish_time_ = 0;
     
     /* Init address struct */
     struct sockaddr_in *broker4 = (struct sockaddr_in *)&broker_;
@@ -69,6 +73,7 @@ class MQTTClient {
   void EventCallback(const struct mqtt_evt *evt);
   bool IsConnected();
   bool HasError();
+  int64_t LatestPublishTime();
 };
 };  // namespace hangang_view
 #endif

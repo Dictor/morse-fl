@@ -3,14 +3,31 @@
 
 #include "../inc/mqtt.h"
 #include "../inc/json.h"
+#include <zephyr/kernel.h>
 namespace hangang_view {
 namespace task {
+
+static const int kPriceTaskLoopInterval = 100;
+static const int kSymbolDisplayChangeInterval = 3000;
+static const int kPublishWatchdogInterval = 60000;
+static const int kBootWatchdogInterval = 30000;
+
 struct AppContext {
   k_tid_t boot_task_id;
   k_tid_t price_task_id;
   MQTTClient *mqtt;
   struct json::symbols symbols;
+  struct k_event error_event;
+  uint32_t boot_task_started_uptime;
+  bool boot_task_complete;
 };
+
+enum class ErrorEventArgument : uint32_t {
+  kBootTimeout = 1U << 0,
+  kPublishWatchdogFired = 1U << 1,
+};
+
+const char* ErrorEventArgumentToString(ErrorEventArgument arg);
 
 void InitTask(struct AppContext *ctx);
 void BootTask(void *, void *, void *);

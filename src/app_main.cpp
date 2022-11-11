@@ -37,10 +37,35 @@ void AppMain(void) {
   struct task::AppContext app_ctx;
   task::InitTask(&app_ctx);
   k_thread_start(app_ctx.boot_task_id);
+  uint32_t error_event_arg;
 
   for (;;) {
     gpio_pin_toggle_dt(&hangang_view::hardware::run_led);
     lv_task_handler();
+
+    if (!app_ctx.boot_task_complete &&
+        (k_uptime_get() - app_ctx.boot_task_started_uptime >
+         task::kBootWatchdogInterval)) {
+          k_event_post(&app_ctx.error_event, (uint32_t)task::ErrorEventArgument::kBootTimeout);
+          LOG_ERR("Boot watchdog fired!, current=%llu, started=%llu", k_uptime_get(), app_ctx.boot_task_started_uptime);
+    }
+
+    error_event_arg =
+        k_event_wait(&app_ctx.error_event, 0xFFFFFFFF, false, K_MSEC(100));
+    if (error_event_arg != 0) {
+      LOG_ERR("error event received! : %d", error_event_arg);
+      ErrorForm frm;
+      task::ErrorEventArgument arg =
+          static_cast<task::ErrorEventArgument>(error_event_arg);
+      frm.error_code_ = (int64_t)error_event_arg;
+      strcpy(frm.error_message_, task::ErrorEventArgumentToString(arg));
+      frm.Update();
+      frm.Draw();
+      for (;;) {
+        lv_task_handler();
+      }
+    }
+    
     k_sleep(K_MSEC(100));
   }
 }

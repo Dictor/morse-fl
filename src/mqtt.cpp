@@ -114,6 +114,7 @@ void MQTTClient::EventCallback(const struct mqtt_evt *evt) {
         LOG_ERR("fail to parse payload to json : %d", ret);
       }
       LOG_INF("%d symbols parsed to 0x%x.", symbols_->symbols_len, symbols_);
+      latest_publish_time_ = k_uptime_get();
       break;
     }
     default:
@@ -159,3 +160,5 @@ int MQTTClient::Subscribe(char *topic_name) {
 int MQTTClient::Input() { return mqtt_input(&client_); }
 
 int MQTTClient::Abort() { return mqtt_abort(&client_); }
+
+int64_t MQTTClient::LatestPublishTime() { return latest_publish_time_; }
