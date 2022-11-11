@@ -103,7 +103,7 @@ void task::BootTask(void *ctx, void *, void *) {
   }
 
   LOG_INF("BootTask [3/4] resolving DNS for MQTT server");
-  DNSResolver dns("192.168.0.8");
+  DNSResolver dns("api.chinchister.com");
   dns.Resolve();
   while (!dns.IsSuccess()) {
     if (dns.HasError()) {
@@ -125,7 +125,7 @@ void task::BootTask(void *ctx, void *, void *) {
 
   int err = 0;
   LOG_INF("BootTask [4/4] connect to MQTT server");
-  auto mqtt = new MQTTClient(server_addr, 3000, &app_ctx->symbols);
+  auto mqtt = new MQTTClient(server_addr, 8080, &app_ctx->symbols);
   mqtt->Connect();
   if (err = mqtt->WaitEstablished(100) < 0) {
     LOG_ERR("MQTT wait socket fail : %d", err);
