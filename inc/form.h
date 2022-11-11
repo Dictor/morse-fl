@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "version.h"
+#include "custom_font.h"
 
 namespace hangang_view {
 class IForm {
@@ -26,7 +27,7 @@ class IForm {
     lv_obj_add_style(base_, &base_style_, LV_PART_MAIN);
   };
 
-  virtual ~IForm(){};
+  virtual ~IForm() { lv_obj_clean(base_); };
   virtual void Update() = 0;
   virtual void Draw() = 0;
 };
@@ -67,21 +68,24 @@ class ErrorForm : public IForm {
 
 class PriceForm : public IForm {
  private:
-  lv_obj_t *label_name_, *label_price_, *label_percentile_;
-  lv_style_t price_style_, name_style_, perc_style_;
+  lv_obj_t *label_name_, *label_price_, *label_percentile_, *label_count_, *label_last_updated_;
+  lv_style_t price_style_, name_style_, perc_style_, attr_style_;
   lv_color_t price_perc_color_;
   char percentile_prefix_[2];
 
  public:
   PriceForm() {
     lv_style_init(&price_style_);
-    lv_style_set_text_font(&price_style_, &lv_font_montserrat_48);
+    lv_style_set_text_font(&price_style_, CustomFontStore::space_grotesk_72_); //CustomFontStore::space_grotesk_72_)
 
     lv_style_init(&name_style_);
-    lv_style_set_text_font(&name_style_, &lv_font_montserrat_24);
+    lv_style_set_text_font(&name_style_, &lv_font_montserrat_48);
 
     lv_style_init(&perc_style_);
-    lv_style_set_text_font(&perc_style_, &lv_font_montserrat_24);
+    lv_style_set_text_font(&perc_style_, &lv_font_montserrat_48);
+
+    lv_style_init(&attr_style_);
+    lv_style_set_text_font(&attr_style_, &lv_font_montserrat_24);
 
     lv_obj_align(base_, LV_ALIGN_TOP_LEFT, 0, 0);
 
@@ -91,6 +95,7 @@ class PriceForm : public IForm {
 
     label_name_ = lv_label_create(base_);
     lv_obj_add_style(label_name_, &name_style_, LV_PART_MAIN);
+    lv_obj_set_width(label_name_, kFrameBufferWidth - 50);
     lv_label_set_long_mode(label_name_, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_align_to(label_name_, label_price_, LV_ALIGN_OUT_TOP_LEFT, 0, 0);
 
@@ -98,18 +103,31 @@ class PriceForm : public IForm {
     lv_obj_add_style(label_percentile_, &perc_style_, LV_PART_MAIN);
     lv_obj_align_to(label_percentile_, label_price_, LV_ALIGN_OUT_BOTTOM_LEFT,
                     0, 0);
+
+    label_last_updated_ = lv_label_create(base_);
+    lv_obj_add_style(label_last_updated_, &attr_style_, LV_PART_MAIN);
+    lv_obj_align(label_last_updated_, LV_ALIGN_TOP_RIGHT, 0, 0);
+
+    label_count_ = lv_label_create(base_);
+    lv_obj_add_style(label_count_, &attr_style_, LV_PART_MAIN);
+    lv_obj_align_to(label_count_, label_last_updated_, LV_ALIGN_OUT_LEFT_MID, -70, 0);
+
+    name_[0] = '\0';
   };
 
   ~PriceForm() {
     lv_obj_clean(label_name_);
     lv_obj_clean(label_price_);
     lv_obj_clean(label_percentile_);
+    lv_obj_clean(label_last_updated_);
+    lv_obj_clean(label_count_);
     lv_obj_clean(base_);
   }
 
   char name_[20];
   float price_;
   float percentile_;
+  int count_, last_update_sec_;
 
   void Update() {
     if (percentile_ > 0) {
@@ -128,9 +146,12 @@ class PriceForm : public IForm {
   void Draw() {
     lv_label_set_text(label_name_, name_);
     lv_label_set_text_fmt(label_price_, "%.2f", price_);
-    lv_label_set_text_fmt(label_percentile_, "%s%.2f%%", percentile_prefix_, percentile_);
+    lv_label_set_text_fmt(label_percentile_, "%s%.2f%%", percentile_prefix_,
+                          percentile_);
     lv_style_set_text_color(&price_style_, price_perc_color_);
     lv_style_set_text_color(&perc_style_, price_perc_color_);
+    lv_label_set_text_fmt(label_count_, LV_SYMBOL_DIRECTORY " %d", count_);
+    lv_label_set_text_fmt(label_last_updated_, LV_SYMBOL_REFRESH " %ds ago",last_update_sec_);
   }
 };
 
