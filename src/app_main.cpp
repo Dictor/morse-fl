@@ -11,6 +11,7 @@
 #include "../inc/hardware.h"
 #include "../inc/task.h"
 #include "../inc/version.h"
+#include "../inc/custom_font.h"
 
 LOG_MODULE_REGISTER(app_main);
 

@@ -3,6 +3,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/random/rand32.h>
+#include <zephyr/kernel.h>
 
 #include "../inc/json.h"
 
