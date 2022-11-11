@@ -11,7 +11,7 @@ LOG_MODULE_REGISTER(task);
 
 using namespace hangang_view;
 
-K_THREAD_STACK_DEFINE(task_boot_stack, 4096);
+K_THREAD_STACK_DEFINE(task_boot_stack, 2048);
 struct k_thread task_boot_data;
 K_THREAD_STACK_DEFINE(task_price_stack, 4096);
 struct k_thread task_price_data;
