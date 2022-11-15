@@ -38,7 +38,7 @@ namespace hangang_view
   class ErrorForm : public IForm
   {
   private:
-    lv_obj_t *label_introduce_, *label_content_;
+    lv_obj_t *label_introduce_, *label_code_, *label_message_;
 
   public:
     int64_t error_code_;
@@ -53,13 +53,15 @@ namespace hangang_view
       lv_obj_set_flex_flow(base_, LV_FLEX_FLOW_COLUMN);
 
       label_introduce_ = lv_label_create(base_);
-      label_content_ = lv_label_create(base_);
+      label_code_ = lv_label_create(base_);
+      label_message_ = lv_label_create(base_);
     }
 
     ~ErrorForm()
     {
       lv_obj_clean(label_introduce_);
-      lv_obj_clean(label_content_);
+      lv_obj_clean(label_code_);
+      lv_obj_clean(label_message_);
     }
 
     void Update() {}
@@ -68,9 +70,9 @@ namespace hangang_view
     {
       lv_label_set_text_fmt(
           label_introduce_,
-          "!!fatal error caused!!\nsystem will be reboot after %d seconds", reboot_counter_);
-      lv_label_set_text_fmt(label_content_, "error code : 0x%d\nerror message : %s",
-                            error_code_, error_message_);
+          "!!fatal error caused!!\nsystem will be reboot after %d seconds\n\n---error detail", reboot_counter_);
+      lv_label_set_text_fmt(label_code_, "0x%d", error_code_);
+      lv_label_set_text(label_message_, error_message_);
     }
   };
 

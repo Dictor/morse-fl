@@ -58,6 +58,10 @@ void AppMain(void) {
         k_event_wait(&app_ctx.error_event, 0xFFFFFFFF, false, K_MSEC(100));
     if (error_event_arg != 0) {
       LOG_ERR("error event received! : %d", error_event_arg);
+
+      k_thread_abort(app_ctx.boot_task_id);
+      k_thread_abort(app_ctx.price_task_id);
+
       ErrorForm frm;
       task::ErrorEventArgument arg =
           static_cast<task::ErrorEventArgument>(error_event_arg);
