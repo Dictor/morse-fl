@@ -42,17 +42,6 @@ void task::PriceTask(void *ctx, void *, void *) {
     k_sleep(K_MSEC(kPriceTaskLoopInterval));
     symbol_interval_counter++;
 
-    if (k_uptime_get() - app_ctx->mqtt->LatestPublishTime() >
-        kPublishWatchdogInterval) {
-      k_event_post(&app_ctx->error_event,
-                   (uint32_t)task::ErrorEventArgument::kPublishWatchdogFired);
-      LOG_ERR(
-          "price topic publish watchdog fired: current=%llu, latest "
-          "publish=%llu",
-          k_uptime_get(), app_ctx->mqtt->LatestPublishTime());
-      return;
-    }
-
     frm.count_ = app_ctx->symbols.symbols_len;
     frm.last_update_sec_ =
         (k_uptime_get() - app_ctx->mqtt->LatestPublishTime()) / 1000;
@@ -108,6 +97,8 @@ void task::BootTask(void *ctx, void *, void *) {
   while (!dns.IsSuccess()) {
     if (dns.HasError()) {
       LOG_ERR("dns resolving failure");
+      k_event_post(&app_ctx->error_event,
+                   (uint32_t)task::ErrorEventArgument::kDNSFailure);
       return;
     }
     k_sleep(K_MSEC(100));
@@ -133,6 +124,8 @@ void task::BootTask(void *ctx, void *, void *) {
   while (true) {
     if (mqtt->HasError()) {
       LOG_ERR("MQTT error caused");
+      k_event_post(&app_ctx->error_event,
+                   (uint32_t)task::ErrorEventArgument::kMQTTFailure);
       return;
     }
     if (mqtt->IsConnected()) {
@@ -173,6 +166,10 @@ const char *task::ErrorEventArgumentToString(ErrorEventArgument arg) {
       return "BootTimeout";
     case ErrorEventArgument::kPublishWatchdogFired:
       return "PublishWatchdogFired";
+    case ErrorEventArgument::kDNSFailure:
+      return "DNSResolvingFail";
+    case ErrorEventArgument::kMQTTFailure:
+      return "MQTTFail";
     default:
       return "Unknown";
   }

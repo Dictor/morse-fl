@@ -18,14 +18,17 @@ LOG_MODULE_REGISTER(app_main);
 
 using namespace hangang_view;
 
-void AppMain(void) {
+void AppMain(void)
+{
   /* hardware initialization */
   LOG_INF("hardware initialization start");
-  if (int ret = hardware::CheckHardware() < 0) {
+  if (int ret = hardware::CheckHardware() < 0)
+  {
     LOG_ERR("fail to check hardware, ret=%d", ret);
     return;
   }
-  if (int ret = hardware::InitHardware() < 0) {
+  if (int ret = hardware::InitHardware() < 0)
+  {
     LOG_ERR("fail to initiate hardware, ret=%d", ret);
     return;
   }
@@ -41,22 +44,36 @@ void AppMain(void) {
   k_thread_start(app_ctx.boot_task_id);
   uint32_t error_event_arg;
 
-  for (;;) {
+  for (;;)
+  {
     gpio_pin_toggle_dt(&hangang_view::hardware::run_led);
     lv_task_handler();
 
     if (!app_ctx.boot_task_complete &&
         (k_uptime_get() - app_ctx.boot_task_started_uptime >
-         task::kBootWatchdogInterval)) {
+         task::kBootWatchdogInterval))
+    {
       k_event_post(&app_ctx.error_event,
                    (uint32_t)task::ErrorEventArgument::kBootTimeout);
-      LOG_ERR("Boot watchdog fired!, current=%llu, started=%llu",
+      LOG_ERR("boot watchdog fired!, current=%llu, started=%llu",
               k_uptime_get(), app_ctx.boot_task_started_uptime);
+    }
+
+    if (k_uptime_get() - app_ctx.mqtt->LatestPublishTime() >
+        task::kPublishWatchdogInterval)
+    {
+      k_event_post(&app_ctx.error_event,
+                   (uint32_t)task::ErrorEventArgument::kPublishWatchdogFired);
+      LOG_ERR(
+          "price topic publish watchdog fired: current=%llu, latest "
+          "publish=%llu",
+          k_uptime_get(), app_ctx.mqtt->LatestPublishTime());
     }
 
     error_event_arg =
         k_event_wait(&app_ctx.error_event, 0xFFFFFFFF, false, K_MSEC(100));
-    if (error_event_arg != 0) {
+    if (error_event_arg != 0)
+    {
       LOG_ERR("error event received! : %d", error_event_arg);
 
       k_thread_abort(app_ctx.boot_task_id);
@@ -68,7 +85,8 @@ void AppMain(void) {
       frm.error_code_ = (int64_t)error_event_arg;
       strcpy(frm.error_message_, task::ErrorEventArgumentToString(arg));
 
-      for (int i = 0; i < 15; i++) {
+      for (int i = 0; i < 15; i++)
+      {
         frm.reboot_counter_ = 15 - i;
         frm.Update();
         frm.Draw();

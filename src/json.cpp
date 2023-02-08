@@ -18,7 +18,7 @@ struct json_obj_descr symbol_descr[] = {
 };
 
 struct json_obj_descr symbols_descr[] = {
-    JSON_OBJ_DESCR_OBJ_ARRAY(struct json::symbols, symbols, 10, symbols_len,
+    JSON_OBJ_DESCR_OBJ_ARRAY(struct json::symbols, symbols, 30, symbols_len,
                              symbol_descr, ARRAY_SIZE(symbol_descr)),
 };
 

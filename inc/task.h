@@ -19,12 +19,15 @@ struct AppContext {
   struct json::symbols symbols;
   struct k_event error_event;
   uint32_t boot_task_started_uptime;
+  uint32_t price_task_latest_update_time;
   bool boot_task_complete;
 };
 
 enum class ErrorEventArgument : uint32_t {
   kBootTimeout = 1U << 0,
   kPublishWatchdogFired = 1U << 1,
+  kDNSFailure = 1U << 2,
+  kMQTTFailure = 1U << 3,
 };
 
 const char* ErrorEventArgumentToString(ErrorEventArgument arg);

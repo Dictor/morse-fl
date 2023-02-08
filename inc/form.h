@@ -122,7 +122,7 @@ namespace hangang_view
 
       label_count_ = lv_label_create(base_);
       lv_obj_add_style(label_count_, &attr_style_, LV_PART_MAIN);
-      lv_obj_align_to(label_count_, label_last_updated_, LV_ALIGN_OUT_LEFT_MID, -70, 0);
+      lv_obj_align_to(label_count_, label_last_updated_, LV_ALIGN_OUT_LEFT_MID, -130, 0);
 
       name_[0] = '\0';
       price_ = 0;

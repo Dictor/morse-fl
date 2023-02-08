@@ -13,7 +13,7 @@ struct symbol {
 };
 
 struct symbols {
-  struct symbol symbols[10];
+  struct symbol symbols[30];
   size_t symbols_len;
 };
 
