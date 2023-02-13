@@ -1,5 +1,5 @@
-#ifndef HANGANG_VIEW_APP_MAIN
-#define HANGANG_VIEW_APP_MAIN
+#ifndef MORSE_FL_APP_MAIN
+#define MORSE_FL_APP_MAIN
 
 #ifdef __cplusplus
 extern "C" {

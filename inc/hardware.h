@@ -1,34 +1,20 @@
-#ifndef HANGANG_VIEW_HARDWARE
-#define HANGANG_VIEW_HARDWARE
+#ifndef MORSE_FL_HARDWARE
+#define MORSE_FL_HARDWARE
 
 /* zephyr device and driver */
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 
-/* zephyr network */
-#include <stdint.h>
-#include <zephyr/net/net_if.h>
-#include <zephyr/net/net_mgmt.h>
-
-namespace hangang_view {
+namespace kimdictor_morse_fl {
 namespace hardware {
 
 extern const struct gpio_dt_spec run_led, err_led, act_led;
 extern const struct device *display;
-extern struct net_mgmt_event_callback net_mgmt_cb;
-extern struct net_if *net_iface;
-extern atomic_t net_iface_status; 
-extern in_addr net_ipv4_address;
-
-void NetMgmtHandler(struct net_mgmt_event_callback *cb,
-                           uint32_t mgmt_event, struct net_if *iface);
-bool NetIPv4Attached();
-in_addr NetGetIPv4Address();
 
 int CheckHardware();
 int InitHardware();
 
 }  // namespace hardware
-}  // namespace hangang_view
+}  // namespace kimdictor_morse_fl
 
 #endif
