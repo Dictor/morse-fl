@@ -23,17 +23,18 @@ namespace convolution_layer {
 const cmsis_nn_tile conv1_stride = {1, 0};
 const cmsis_nn_tile conv1_padding = {1, 0};
 const cmsis_nn_tile conv1_dilation = {1, 0};
-const cmsis_nn_activation conv1_activation = {-127, 128};
+const cmsis_nn_activation conv1_activation = {-128, 127};
 const cmsis_nn_conv_params conv1_params = {
     0, 0, conv1_stride, conv1_padding, conv1_dilation, conv1_activation};
 
 const cmsis_nn_dims conv1_in_dims = {1, 1, 64, 1};
 const cmsis_nn_dims conv1_filter_dims = {24, 1, 3, 1};
-const cmsis_nn_dims conv1_bias_dims = {24, 24, 24, 24};
+const cmsis_nn_dims conv1_bias_dims = {1, 1, 1, 24};
 const cmsis_nn_dims conv1_out_dims = {1, 1, 64, 24};
 
 const int32_t conv1_multiplier = 1303535969;
 const int32_t conv1_shift = -6;
+const int8_t conv1_zero = 14;
 int32_t conv1_multiplier_array[24];
 int32_t conv1_shift_array[24];
 const cmsis_nn_per_channel_quant_params conv1_quant = {conv1_multiplier_array,
@@ -50,13 +51,13 @@ const int32_t conv1_bias[] = {-40, -65, -8, 76,  -49, -7,  7,  -29,
                               37,  43,  -5, -59, 41,  35,  62, 55};
 
 void conv1_init() {
-  for (int c = 0; c < conv1_filter_dims.c; c++) {
+  for (int c = 0; c < conv1_filter_dims.n; c++) {
     conv1_multiplier_array[c] = conv1_multiplier;
     conv1_shift_array[c] = conv1_shift;
   }
 }
 
-const cmsis_nn_tile max1_stride = {2, 0};
+const cmsis_nn_tile max1_stride = {2, 1};
 const cmsis_nn_tile max1_padding = {0, 0};
 const cmsis_nn_activation max1_activation = {-127, 128};
 const cmsis_nn_pool_params max1_params = {max1_stride, max1_padding,
@@ -92,8 +93,9 @@ const cmsis_nn_dims conv2_filter_dims = {48, 1, 3, 24};
 const cmsis_nn_dims conv2_bias_dims = {48, 48, 48, 48};
 const cmsis_nn_dims conv2_out_dims = {1, 1, 32, 48};
 
-const int32_t conv2_multiplier = 1623907548;
+const int32_t conv2_multiplier = 1623907549;
 const int32_t conv2_shift = -7;
+const int8_t conv2_zero = -1;
 int32_t conv2_multiplier_array[48];
 int32_t conv2_shift_array[48];
 const cmsis_nn_per_channel_quant_params conv2_quant = {conv2_multiplier_array,
@@ -373,7 +375,7 @@ const int32_t conv2_bias[] = {-5,  -21, -29, 12,  -9,  -50, -16, -6,  20,  28,
                               12,  -33, -10, -9,  -29, 7,   3,   -33};
 
 void conv2_init() {
-  for (int c = 0; c < conv2_filter_dims.c; c++) {
+  for (int c = 0; c < conv2_filter_dims.n; c++) {
     conv2_multiplier_array[c] = conv2_multiplier;
     conv2_shift_array[c] = conv2_shift;
   }
@@ -387,6 +389,8 @@ const cmsis_nn_pool_params max2_params = {max2_stride, max2_padding,
 const cmsis_nn_dims max2_in_dims = conv2_out_dims;
 const cmsis_nn_dims max2_filter_dims = {0, 1, 2, 0};
 const cmsis_nn_dims max2_out_dims = {0, 1, 16, 48};
+
+
 }  // namespace convolution_layer
 };  // namespace kimdictor_morse_fl
 #endif
