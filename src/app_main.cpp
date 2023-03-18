@@ -12,12 +12,26 @@
 
 #include "../inc/convolution_layer.h"
 #include "../inc/form.h"
+#include "../inc/genann.h"
 #include "../inc/hardware.h"
 #include "../inc/version.h"
 
 LOG_MODULE_REGISTER(app_main);
 
 using namespace kimdictor_morse_fl;
+
+genann *ann = genann_init(16 * 48, 0, 0, 37);
+
+void printk_hexdump(int8_t *in) {
+  for (int i = 0; i < 64 * 24; i++) {
+    if (i % 32 == 0) {
+      if (i != 0) printk("\n");
+      printk("%4d | ", i);
+    }
+    printk("%4d ", in[i]);
+  }
+  printk("\n");
+}
 
 void AppMain(void) {
   /* hardware initialization */
@@ -41,7 +55,8 @@ void AppMain(void) {
                         0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
   int8_t *in_buffer, *out_buffer;
 
-  for (auto &d : test_data) if (d > 0) d = 127;
+  for (auto &d : test_data)
+    if (d > 0) d = 127;
 
   in_buffer = test_data;
   out_buffer = (int8_t *)malloc(sizeof(int8_t) * 64 * 24);
@@ -49,16 +64,15 @@ void AppMain(void) {
     LOG_ERR("failed to allocate conv1 output buffer");
     return;
   }
+  memset(out_buffer, 0, sizeof(int8_t) * 64 * 24);
 
-  LOG_HEXDUMP_INF(in_buffer, 64, "input of conv1 (first 300 bytes)");
+  LOG_HEXDUMP_INF(in_buffer, 64, "input of conv1");
   LOG_INF("start conv1");
   convolution_layer::ConvolutionLayer1((q7_t *)in_buffer, (q7_t *)out_buffer);
   LOG_INF("finish conv1");
-  LOG_HEXDUMP_INF(out_buffer, 300, "output of conv1 (first 300 bytes)");
 
   in_buffer = out_buffer;
-  out_buffer =
-      (int8_t *)malloc(sizeof(int8_t) * 32 * 48);
+  out_buffer = (int8_t *)malloc(sizeof(int8_t) * 32 * 48);
   if (out_buffer == nullptr) {
     LOG_ERR("failed to allocate conv2 output buffer");
     return;
