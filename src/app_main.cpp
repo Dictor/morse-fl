@@ -15,23 +15,15 @@
 #include "../inc/genann.h"
 #include "../inc/hardware.h"
 #include "../inc/version.h"
+#include "../inc/weight_bias.h"
 
 LOG_MODULE_REGISTER(app_main);
 
 using namespace kimdictor_morse_fl;
 
-genann *ann = genann_init(16 * 48, 0, 0, 37);
-
-void printk_hexdump(int8_t *in) {
-  for (int i = 0; i < 64 * 24; i++) {
-    if (i % 32 == 0) {
-      if (i != 0) printk("\n");
-      printk("%4d | ", i);
-    }
-    printk("%4d ", in[i]);
-  }
-  printk("\n");
-}
+genann *ann;
+const int conv1_size = convolution_layer::conv1_out_dims.w * convolution_layer::conv1_out_dims.c;
+const int conv2_size = convolution_layer::conv2_out_dims.w * convolution_layer::conv2_out_dims.c;
 
 void AppMain(void) {
   /* hardware initialization */
@@ -49,30 +41,33 @@ void AppMain(void) {
   /* application logic */
   LOG_INF("application started");
 
-  int8_t test_data[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
-                        1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0,
-                        0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
+  int8_t test_data[] = {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   int8_t *in_buffer, *out_buffer;
 
   for (auto &d : test_data)
     if (d > 0) d = 127;
 
   in_buffer = test_data;
-  out_buffer = (int8_t *)malloc(sizeof(int8_t) * 64 * 24);
+  out_buffer = (int8_t *)malloc(sizeof(int8_t) * conv1_size);
   if (out_buffer == nullptr) {
     LOG_ERR("failed to allocate conv1 output buffer");
     return;
   }
-  memset(out_buffer, 0, sizeof(int8_t) * 64 * 24);
+  memset(out_buffer, 0, sizeof(int8_t) * conv1_size);
 
+  convolution_layer::Init();
   LOG_HEXDUMP_INF(in_buffer, 64, "input of conv1");
   LOG_INF("start conv1");
   convolution_layer::ConvolutionLayer1((q7_t *)in_buffer, (q7_t *)out_buffer);
   LOG_INF("finish conv1");
 
+  LOG_HEXDUMP_INF(out_buffer, 300, "output of conv1 (first 300 bytes)");
+
   in_buffer = out_buffer;
-  out_buffer = (int8_t *)malloc(sizeof(int8_t) * 32 * 48);
+  out_buffer = (int8_t *)malloc(sizeof(int8_t) * conv2_size);
   if (out_buffer == nullptr) {
     LOG_ERR("failed to allocate conv2 output buffer");
     return;
@@ -82,7 +77,26 @@ void AppMain(void) {
   free(in_buffer);
   LOG_INF("finish conv2");
 
+  // actual data on here is 768 bytes
   LOG_HEXDUMP_INF(out_buffer, 300, "output of conv2 (first 300 bytes)");
+
+  ann = genann_init(conv2_size, 0, 0, 37);
+  double *nn_input = (double *)malloc(sizeof(double) * conv2_size);
+  for (int i = 0; i < conv2_size; i++) {
+    nn_input[i] = out_buffer[i] * convolution_layer::conv2_real_scale;
+  }
+
+  memcpy(ann->weight, convolution_layer::fc, sizeof(convolution_layer::fc));
+  const double *nn_output = genann_run(ann, nn_input);
+  double nn_output_max_value = 0.f;
+  int nn_output_max_index = 0;
+  for (int i = 0; i < 37; i++) {
+    if (nn_output[i] >= nn_output_max_value) {
+      nn_output_max_value = nn_output[i];
+      nn_output_max_index = i;
+    }
+  }
+  LOG_INF("result is %d -> %f", nn_output_max_index, nn_output_max_value);
 
   for (;;) {
     gpio_pin_toggle_dt(&hardware::run_led);

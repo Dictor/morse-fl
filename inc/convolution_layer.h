@@ -5,6 +5,7 @@
 
 namespace kimdictor_morse_fl {
 namespace convolution_layer {
+void Init();
 bool ConvolutionLayer1(q7_t *in, q7_t *out);
 bool ConvolutionLayer2(q7_t *in, q7_t *out);
 };  // namespace convolution_layer
