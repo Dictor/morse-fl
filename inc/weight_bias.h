@@ -170,8 +170,15 @@ const cmsis_nn_pool_params max2_params = {max2_stride, max2_padding,
 const cmsis_nn_dims max2_in_dims = conv2_out_dims;
 const cmsis_nn_dims max2_filter_dims = {0, 1, 2, 0};
 const cmsis_nn_dims max2_out_dims = {0, 1, 16, 24};
+};  // namespace convolution_layer
 
-const double fc[] = {
+namespace fullyconnected_layer {
+
+const int fc_input_dim = 16 * 24;
+const int fc_output_dim = 37;
+const int fc_hidden_dim = 0;
+
+const double fc_weight[] = {
     0.220208,  -0.417267, -0.208164, -0.213054, -0.197442, -0.188980, -0.198090,
     0.071403,  0.166033,  0.217721,  -0.065902, -0.081023, 0.118766,  0.089683,
     0.081484,  0.090376,  0.008967,  0.017967,  0.117563,  -0.040309, -0.039468,
@@ -2202,6 +2209,6 @@ const double fc[] = {
     -0.076192, -0.043305, -0.090218, -0.200668, 0.078623,  0.311938,  0.190197,
     0.201804,  0.111599,  0.049372,  -0.033235, 0.076216,  0.229138,  -0.104783,
     -0.430133, -0.198429, 0.028139,  0.094255,  -0.090364};
-}  // namespace convolution_layer
+};   // namespace fullyconnected_layer
 };  // namespace kimdictor_morse_fl
 #endif

@@ -11,8 +11,8 @@
 #include <memory>
 
 #include "../inc/convolution_layer.h"
+#include "../inc/fullyconnected_layer.h"
 #include "../inc/form.h"
-#include "../inc/genann.h"
 #include "../inc/hardware.h"
 #include "../inc/version.h"
 #include "../inc/weight_bias.h"
@@ -21,7 +21,6 @@ LOG_MODULE_REGISTER(app_main);
 
 using namespace kimdictor_morse_fl;
 
-genann *ann;
 const int conv1_size = convolution_layer::conv1_out_dims.w * convolution_layer::conv1_out_dims.c;
 const int conv2_size = convolution_layer::conv2_out_dims.w * convolution_layer::conv2_out_dims.c;
 
@@ -42,7 +41,7 @@ void AppMain(void) {
   LOG_INF("application started");
 
   int8_t test_data[] = {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   int8_t *in_buffer, *out_buffer;
@@ -80,23 +79,13 @@ void AppMain(void) {
   // actual data on here is 768 bytes
   LOG_HEXDUMP_INF(out_buffer, 300, "output of conv2 (first 300 bytes)");
 
-  ann = genann_init(conv2_size, 0, 0, 37);
-  double *nn_input = (double *)malloc(sizeof(double) * conv2_size);
-  for (int i = 0; i < conv2_size; i++) {
-    nn_input[i] = out_buffer[i] * convolution_layer::conv2_real_scale;
-  }
-
-  memcpy(ann->weight, convolution_layer::fc, sizeof(convolution_layer::fc));
-  const double *nn_output = genann_run(ann, nn_input);
-  double nn_output_max_value = 0.f;
-  int nn_output_max_index = 0;
-  for (int i = 0; i < 37; i++) {
-    if (nn_output[i] >= nn_output_max_value) {
-      nn_output_max_value = nn_output[i];
-      nn_output_max_index = i;
-    }
-  }
-  LOG_INF("result is %d -> %f", nn_output_max_index, nn_output_max_value);
+  LOG_INF("start fc");
+  fullyconnected_layer::Init();
+  fullyconnected_layer::ApplyInput(out_buffer, conv2_size, convolution_layer::conv2_real_scale);
+  auto result = fullyconnected_layer::FindMax(fullyconnected_layer::Inference());
+  const char* result_to_string = "ABCDEFGHIJKLMNOPQRSTVXYZ0123456789?";
+  LOG_INF("result is %d ('%c')-> %f", result.first, result_to_string[result.first], result.second);
+  LOG_INF("finish fc");
 
   for (;;) {
     gpio_pin_toggle_dt(&hardware::run_led);
