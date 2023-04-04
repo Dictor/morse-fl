@@ -24,6 +24,15 @@ using namespace kimdictor_morse_fl;
 const int conv1_size = convolution_layer::conv1_out_dims.w * convolution_layer::conv1_out_dims.c;
 const int conv2_size = convolution_layer::conv2_out_dims.w * convolution_layer::conv2_out_dims.c;
 
+void PrintWeight(const char* title, int8_t* weight, int length, double scale) {
+  printf("%s weight -----\n", title);
+  for (int i = 0; i < length; i++) {
+    printf("%.2f ", weight[i] * scale);
+    if ((i+1) % 16 == 0) printf("\n");
+  }
+  printf("-------------");
+}
+
 void AppMain(void) {
   /* hardware initialization */
   LOG_INF("hardware initialization start");
