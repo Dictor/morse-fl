@@ -62,7 +62,7 @@ bool convolution_layer::ConvolutionLayer1(q7_t *in, q7_t *out) {
   }
 
   arm_relu_q7(out_buf.get(),
-              max1_out_dims.c * max1_out_dims.h * max1_out_dims.w);
+              conv1_out_dims.w * conv1_out_dims.h * conv1_out_dims.c);
 
   ret = arm_max_pool_s8(&ctx, &max1_params, &max1_in_dims, out_buf.get(),
                         &max1_filter_dims, &max1_out_dims, out);
@@ -106,7 +106,7 @@ bool convolution_layer::ConvolutionLayer2(q7_t *in, q7_t *out) {
   }
 
   arm_relu_q7(out_buf.get(),
-              max2_out_dims.c * max2_out_dims.h * max2_out_dims.w);
+              conv2_out_dims.w * conv2_out_dims.h * conv2_out_dims.c);
 
   ret = arm_max_pool_s8(&ctx, &max2_params, &max2_in_dims, out_buf.get(),
                         &max2_filter_dims, &max2_out_dims, out);
