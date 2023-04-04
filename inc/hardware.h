@@ -8,7 +8,7 @@
 namespace kimdictor_morse_fl {
 namespace hardware {
 
-extern const struct gpio_dt_spec run_led, err_led, act_led;
+extern const struct gpio_dt_spec run_led, err_led, act_led, user_button;
 extern const struct device *display;
 
 int CheckHardware();

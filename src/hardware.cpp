@@ -1,8 +1,10 @@
 #include "../inc/hardware.h"
 
-#include <zephyr/logging/log.h>
 #include <errno.h>
 #include <lvgl.h>
+#include <zephyr/logging/log.h>
+
+#include <vector>
 
 LOG_MODULE_REGISTER(hardware);
 
@@ -14,21 +16,18 @@ const struct gpio_dt_spec hardware::err_led =
     GPIO_DT_SPEC_GET(DT_NODELABEL(err_led), gpios);
 const struct gpio_dt_spec hardware::act_led =
     GPIO_DT_SPEC_GET(DT_NODELABEL(act_led), gpios);
+
+const struct gpio_dt_spec hardware::user_button =
+    GPIO_DT_SPEC_GET(DT_NODELABEL(user_button), gpios);
+
 const struct device* hardware::display = DEVICE_DT_GET(DT_NODELABEL(ltdc));
 
 int hardware::CheckHardware() {
-  /*
-  check_list is pointer array of device struct and kChecklistSize define its
-  size. CPP container is intentionally hestatied because it's system initialize
-  code
-  */
-  const int kChecklistSize = 4;
-  const device *check_list[kChecklistSize] = {run_led.port, err_led.port,
-                                              act_led.port, display};
-
-  for (int i = 0; i < kChecklistSize; i++) {
-    if (check_list[i] == NULL) return -EINVAL;
-    if (!device_is_ready(check_list[i])) return -ENODEV;
+  const std::vector<const device*> check_list = {
+      run_led.port, err_led.port, act_led.port, user_button.port, display};
+  for (auto d : check_list) {
+    if (d == nullptr) return -EINVAL;
+    if (!device_is_ready(d)) return -ENODEV;
   }
   return 0;
 }
@@ -37,6 +36,6 @@ int hardware::InitHardware() {
   gpio_pin_configure_dt(&hardware::run_led, GPIO_OUTPUT);
   gpio_pin_configure_dt(&hardware::err_led, GPIO_OUTPUT);
   gpio_pin_configure_dt(&hardware::act_led, GPIO_OUTPUT);
-
+  gpio_pin_configure_dt(&hardware::user_button, GPIO_INPUT);
   return 0;
 }
