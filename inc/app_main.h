@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void PrintWeight(const char* title, int8_t* weight, int length, double scale); 
+void PrintWeight(const char* title, int8_t* weight, int length, double scale, int8_t zeropoint); 
 void AppMain(void);
 
 #ifdef __cplusplus

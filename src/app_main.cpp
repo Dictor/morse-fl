@@ -24,10 +24,12 @@ using namespace kimdictor_morse_fl;
 const int conv1_size = convolution_layer::conv1_out_dims.w * convolution_layer::conv1_out_dims.c;
 const int conv2_size = convolution_layer::conv2_out_dims.w * convolution_layer::conv2_out_dims.c;
 
-void PrintWeight(const char* title, int8_t* weight, int length, double scale) {
+void PrintWeight(const char* title, int8_t* weight, int length, double scale, int8_t zeropoint) {
   printf("%s weight -----\n", title);
+  int32_t buffer;
   for (int i = 0; i < length; i++) {
-    printf("%.2f ", weight[i] * scale);
+    buffer = weight[i];
+    printf("%2.2f ", (buffer - zeropoint) * scale);
     if ((i+1) % 16 == 0) printf("\n");
   }
   printf("-------------");
@@ -48,15 +50,39 @@ void AppMain(void) {
 
   /* application logic */
   LOG_INF("application started");
-
+  
   int8_t test_data[] = {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  /*
+  int pin;
+  for (int i = 0; i < sizeof(test_data); i++) {
+    pin = gpio_pin_get_dt(&hardware::user_button);
+    switch (pin) {
+      case 1:
+        test_data[i] = 1;
+        printf(".");
+        break;
+      case 0:
+        test_data[i] = 0;
+        printf("_");
+        break;
+      default:
+        test_data[i] = 0;
+        LOG_ERR("failed to read user button : %d", pin);
+        break;
+    }
+    k_sleep(K_MSEC(50));
+  }
+  printf("\n");
+  */
+
   int8_t *in_buffer, *out_buffer;
 
   for (auto &d : test_data)
-    if (d > 0) d = 127;
+    d = d > 0 ? input::one : input::zero;
 
   in_buffer = test_data;
   out_buffer = (int8_t *)malloc(sizeof(int8_t) * conv1_size);
@@ -90,7 +116,7 @@ void AppMain(void) {
 
   LOG_INF("start fc");
   fullyconnected_layer::Init();
-  fullyconnected_layer::ApplyInput(out_buffer, conv2_size, convolution_layer::conv2_real_scale);
+  fullyconnected_layer::ApplyInput(out_buffer, conv2_size, convolution_layer::conv2_real_scale, convolution_layer::conv2_zero);
   auto result = fullyconnected_layer::FindMax(fullyconnected_layer::Inference());
   const char* result_to_string = "ABCDEFGHIJKLMNOPQRSTVXYZ0123456789?";
   LOG_INF("result is %d ('%c')-> %f", result.first, result_to_string[result.first], result.second);

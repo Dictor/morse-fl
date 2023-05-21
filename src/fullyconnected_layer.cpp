@@ -13,9 +13,11 @@ bool fullyconnected_layer::Init() {
   return true;
 }
 
-void fullyconnected_layer::ApplyInput(q7_t* input, int count, double scale) {
+void fullyconnected_layer::ApplyInput(q7_t* input, int count, double scale, int8_t zeropoint) {
+  int32_t buffer;
   for (int i = 0; i < count; i++) {
-    fc_input[i] = input[i] * scale;
+    buffer = input[i];
+    fc_input[i] = (buffer - zeropoint) * scale;
   }
 }
 

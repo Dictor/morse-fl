@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "../inc/weight_bias.h"
+#include "../inc/app_main.h"
 
 LOG_MODULE_REGISTER(convolution_layer);
 
@@ -60,6 +61,7 @@ bool convolution_layer::ConvolutionLayer1(q7_t *in, q7_t *out) {
     LOG_ERR("failed to calculate convolution layer1 (%d)", ret);
     return false;
   }
+  PrintWeight("only conv1", out_buf.get(), out_size, conv1_real_scale, conv1_zero);
 
   arm_relu_q7(out_buf.get(),
               conv1_out_dims.w * conv1_out_dims.h * conv1_out_dims.c);

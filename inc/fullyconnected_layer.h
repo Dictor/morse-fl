@@ -17,7 +17,7 @@ extern double fc_input[fc_input_dim];
 typedef std::unique_ptr<double[], decltype(free)> output_array_t;
 
 bool Init();
-void ApplyInput(q7_t* input, int count, double scale);
+void ApplyInput(q7_t* input, int count, double scale, int8_t zeropoint);
 const double* Inference();
 std::pair<int, double> FindMax(const double* input);
 };  // namespace fullyconnected_layer
